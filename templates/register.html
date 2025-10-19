@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Fuel Express{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0 mt-5">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-plus text-primary display-4 mb-3"></i>
+                        <h2 class="fw-bold">Create Account</h2>
+                        <p class="text-muted">Join Fuel Express today</p>
+                    </div>
+
+                    <form method="POST" id="registerForm">
+                        <div class="mb-3">
+                            <label for="user_type" class="form-label">Account Type</label>
+                            <select class="form-select" id="user_type" name="user_type" required onchange="toggleFields()">
+                                <option value="">Select account type</option>
+                                <option value="user">Customer</option>
+                                <option value="delivery_agent">Delivery Agent</option>
+                                <option value="station_admin">Fuel Station Admin</option>
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">Full Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="name" name="name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-phone"></i>
+                                    </span>
+                                    <input type="tel" class="form-control" id="phone" name="phone" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="vehicle_field" style="display: none;">
+                            <label for="vehicle_number" class="form-label">Vehicle Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-truck"></i>
+                                </span>
+                                <input type="text" class="form-control" id="vehicle_number" name="vehicle_number" placeholder="e.g., MH12AB1234">
+                            </div>
+                        </div>
+
+                        <div id="station_fields" style="display: none;">
+                            <h6 class="mb-3">Fuel Station Information</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="station_name" class="form-label">Station Name</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-gas-pump"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="station_name" name="station_name" placeholder="e.g., City Fuel Station">
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="station_address" class="form-label">Station Address</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="station_address" name="station_address" placeholder="Full station address">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="station_latitude" class="form-label">Latitude</label>
+                                    <input type="number" class="form-control" id="station_latitude" name="station_latitude" step="any" placeholder="e.g., 19.0760">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="station_longitude" class="form-label">Longitude</label>
+                                    <input type="number" class="form-control" id="station_longitude" name="station_longitude" step="any" placeholder="e.g., 72.8777">
+                                </div>
+                            </div>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                You can get coordinates from Google Maps by right-clicking on your station location.
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="confirm_password" class="form-label">Confirm Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 btn-lg mb-3">
+                            <i class="fas fa-user-plus me-2"></i>Create Account
+                        </button>
+                    </form>
+
+                    <div class="text-center">
+                        <p class="mb-0">Already have an account? 
+                            <a href="{{ url_for('login') }}" class="text-decoration-none">Sign in here</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleFields() {
+    const userType = document.getElementById('user_type').value;
+    const vehicleField = document.getElementById('vehicle_field');
+    const stationFields = document.getElementById('station_fields');
+    const vehicleInput = document.getElementById('vehicle_number');
+    
+    // Hide all fields first
+    vehicleField.style.display = 'none';
+    stationFields.style.display = 'none';
+    vehicleInput.required = false;
+    
+    // Show relevant fields based on user type
+    if (userType === 'delivery_agent') {
+        vehicleField.style.display = 'block';
+        vehicleInput.required = true;
+    } else if (userType === 'station_admin') {
+        stationFields.style.display = 'block';
+        // Make station fields required
+        document.getElementById('station_name').required = true;
+        document.getElementById('station_address').required = true;
+        document.getElementById('station_latitude').required = true;
+        document.getElementById('station_longitude').required = true;
+    } else {
+        // Reset station field requirements
+        document.getElementById('station_name').required = false;
+        document.getElementById('station_address').required = false;
+        document.getElementById('station_latitude').required = false;
+        document.getElementById('station_longitude').required = false;
+    }
+}
+
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    
+    if (password !== confirmPassword) {
+        e.preventDefault();
+        alert('Passwords do not match!');
+        return false;
+    }
+    
+    if (password.length < 6) {
+        e.preventDefault();
+        alert('Password must be at least 6 characters long!');
+        return false;
+    }
+});
+</script>
+{% endblock %}

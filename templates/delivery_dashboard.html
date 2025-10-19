@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Delivery Dashboard - Fuel Express{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-truck me-2"></i>Delivery Dashboard</h2>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-{{ 'success' if current_user.is_available else 'danger' }} me-2">
+                        {{ 'Available' if current_user.is_available else 'Busy' }}
+                    </span>
+                    <button class="btn btn-sm btn-outline-primary" onclick="toggleAvailability()">
+                        <i class="fas fa-toggle-{{ 'on' if current_user.is_available else 'off' }} me-1"></i>
+                        {{ 'Go Offline' if current_user.is_available else 'Go Online' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h4 class="card-title">{{ orders|length }}</h4>
+                    <p class="card-text">Total Orders</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h4 class="card-title">{{ orders|selectattr('status', 'in', ['assigned', 'out_for_delivery'])|list|length }}</h4>
+                    <p class="card-text">Active Orders</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h4 class="card-title">{{ orders|selectattr('status', 'equalto', 'completed')|list|length }}</h4>
+                    <p class="card-text">Completed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h4 class="card-title">{{ orders|sum(attribute='total_amount')|round(2) }}</h4>
+                    <p class="card-text">Total Value</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Assigned Orders</h5>
+                </div>
+                <div class="card-body">
+                    {% if orders %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Fuel Type</th>
+                                        <th>Quantity</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Address</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                    <tr>
+                                        <td>#{{ order.id }}</td>
+                                        <td>{{ order.customer.name }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if order.fuel_type == 'petrol' else 'info' }}">
+                                                {{ order.fuel_type.title() }}
+                                            </span>
+                                        </td>
+                                        <td>{{ order.quantity }}L</td>
+                                        <td>₹{{ "%.2f"|format(order.total_amount) }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 
+                                                'secondary' if order.status == 'pending' else
+                                                'primary' if order.status == 'assigned' else
+                                                'warning' if order.status == 'out_for_delivery' else
+                                                'success' if order.status == 'completed' else
+                                                'danger'
+                                            }}">
+                                                {{ order.status.replace('_', ' ').title() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info" onclick="viewLocation({{ order.id }}, {{ order.latitude }}, {{ order.longitude }}, '{{ order.delivery_address }}')">
+                                                <i class="fas fa-map-marker-alt"></i> View
+                                            </button>
+                                        </td>
+                                        <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                        <td>
+                                            {% if order.status == 'assigned' %}
+                                                <button class="btn btn-sm btn-warning" onclick="updateStatus({{ order.id }}, 'out_for_delivery')">
+                                                    <i class="fas fa-truck me-1"></i>Start Delivery
+                                                </button>
+                                            {% elif order.status == 'out_for_delivery' %}
+                                                <button class="btn btn-sm btn-success" onclick="updateStatus({{ order.id }}, 'completed')">
+                                                    <i class="fas fa-check me-1"></i>Complete
+                                                </button>
+                                            {% elif order.status == 'completed' %}
+                                                <span class="text-success">
+                                                    <i class="fas fa-check-circle"></i> Delivered
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No orders assigned</h5>
+                            <p class="text-muted">You will receive orders here when they are assigned to you.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Location Modal -->
+<div class="modal fade" id="locationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-map-marker-alt me-2"></i>Delivery Location</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="location_content">
+                    <!-- Location content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="openInMaps()">
+                    <i class="fas fa-external-link-alt me-2"></i>Open in Maps
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentLocationData = null;
+
+function updateStatus(orderId, newStatus) {
+    const statusText = newStatus === 'out_for_delivery' ? 'start delivery' : 'complete delivery';
+    
+    if (confirm(`Are you sure you want to ${statusText} for order #${orderId}?`)) {
+        fetch(`/delivery/update_status/${orderId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error: ' + data.error);
+            } else {
+                alert(`Order #${orderId} status updated successfully!`);
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error updating order status');
+        });
+    }
+}
+
+function viewLocation(orderId, lat, lng, address) {
+    currentLocationData = { orderId, lat, lng, address };
+    
+    const content = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Order #${orderId}</h6>
+                <p><strong>Address:</strong> ${address}</p>
+                <p><strong>Coordinates:</strong> ${lat}, ${lng}</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Use the "Open in Maps" button to navigate to this location.
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div id="map" style="height: 300px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center;">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-map fa-3x mb-2"></i>
+                        <p>Map view requires Google Maps API integration</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('location_content').innerHTML = content;
+    const modal = new bootstrap.Modal(document.getElementById('locationModal'));
+    modal.show();
+}
+
+function openInMaps() {
+    if (currentLocationData) {
+        const { lat, lng, address } = currentLocationData;
+        const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+        window.open(mapsUrl, '_blank');
+    }
+}
+
+function toggleAvailability() {
+    // This would typically make an API call to update availability status
+    // For now, we'll just show a message
+    const currentStatus = {{ current_user.is_available|tojson }};
+    const newStatus = !currentStatus;
+    
+    if (confirm(`Are you sure you want to go ${newStatus ? 'online' : 'offline'}?`)) {
+        // In a real implementation, this would make an API call
+        alert(`Availability status updated to ${newStatus ? 'online' : 'offline'}`);
+        location.reload();
+    }
+}
+
+// Auto-refresh orders every 30 seconds
+setInterval(function() {
+    // In a real implementation, this would fetch updated orders
+    // location.reload();
+}, 30000);
+</script>
+{% endblock %}
+
+
+
